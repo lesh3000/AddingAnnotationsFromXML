@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DocuVieware HTML5/jQuery App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="docuvieware-min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="docuvieware-min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var docuViewareConfig = {
+                SessionId: "mySessionId",
+                ControlId: "DocuVieware1",
+                AllowPrint: true,
+                EnablePrintButton: true,
+                AllowUpload: true,
+                EnableFileUploadButton: true,
+                CollapsedSnapIn: true,
+                ShowAnnotationsSnapIn: true,
+                EnableRotateButtons: true,
+                EnableZoomButtons: true,
+                EnablePageViewButtons: true,
+                EnableMultipleThumbnailSelection: true,
+                EnableMouseModeButtons: true,
+                EnableFormFieldsEdition: true,
+                EnableTwainAcquisitionButton: true,
+                ShowAnnotationsCommentsSnapIn : false
+            }
+            $.ajax({
+                url: "http://localhost:62968/api/DocuViewareREST/GetDocuViewareControl",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(docuViewareConfig),
+                success: function (data) {
+                    $("#dvContainer").html(data["HtmlContent"]);
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <button type="button" onclick="doc(1);">Load Document 1</button>
+    <button type="button" onclick="doc(2);">Load Document 2 </button>
+    
+    <div class="row">
+
+        <div class="col-sm-8" id="dvContainer" style="width:1200px;height:1000px"></div> 
+        <div class="col-sm-4" id="list"><h2>Your Entities</h2></div>
+    </div>
+   
+    <script>
+
+
+        function doc(number) {
+            DocuViewareAPI.PostCustomServerAction('DocuVieware1', false, "load", number, function () { console.log("success") }, function () { });
+            document.getElementById("list").innerHTML="<h2>Your Entities</h2>"
+
+        }
+
+        function RegisterOnAnnotationSelectedStateChangedOnDocuViewareAPIReady() {
+            if (typeof DocuViewareAPI !== "undefined" && DocuViewareAPI.IsInitialized("DocuVieware1")) {
+                DocuViewareAPI.RegisterOnAnnotationSelectedStateChanged("DocuVieware1", function (annot) {
+
+                    if (annot.state == true) {
+                        var text = DocuViewareAPI.GetAnnotClientTag("DocuVieware1", annot.id);
+                        document.getElementById("list").innerHTML+= "<br />"+text;
+                    }
+                });
+            }
+            else {
+                setTimeout(function () { RegisterOnAnnotationSelectedStateChangedOnDocuViewareAPIReady() }, 10);
+            }
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            RegisterOnAnnotationSelectedStateChangedOnDocuViewareAPIReady();
+        }, false);
+
+
+
+    </script>
+</body>
+
+
+</html>
